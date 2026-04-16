@@ -78,7 +78,7 @@ tests = [
 ]
 dev = [
     "cython",
-    "mypy>=1",
+    "ty>=0.0.31",
     "pre-commit>=3",
     "ruff>=0.5.0",
     "molara[doc]",
@@ -119,20 +119,13 @@ lint.ignore = [
   "S101",   # Use of assert detected
   ]
 
-[tool.mypy]
-exclude = ["ui_*"]
-ignore_missing_imports = true
-no_implicit_optional = false
+[tool.ty.src]
+exclude = ["tests", "**/ui_*"]
 
-[tool.pyright]
-typeCheckingMode = "off"
-reportPossiblyUnboundVariable = true
-reportUnboundVariable = true
-reportMissingImports = false
-reportMissingModuleSource = false
-reportInvalidTypeForm = false
-exclude = ["tests"]
-ignore = ["**/ui_*"]
+[tool.ty.rules]
+unresolved-import = "ignore"
+possibly-missing-import = "ignore"
+invalid-type-form = "ignore"
 
 [tool.codespell]
 ignore-words-list = "nd,te,TITEL"

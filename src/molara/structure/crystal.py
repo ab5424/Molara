@@ -12,16 +12,18 @@ from molara.structure.atom import atomic_number_to_symbol, elements
 from .structure import Structure
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from numpy.typing import ArrayLike, NDArray
 
     try:
         from pymatgen.core import Structure as Pmgstructure
     except ImportError:
-        pmgstructure = None
+        Pmgstructure = Any  # type: ignore[misc,assignment]
     try:
         from ase import Atoms
     except ImportError:
-        Atoms = None
+        Atoms = Any  # type: ignore[misc,assignment]
 
 __copyright__ = "Copyright 2024, Molara"
 

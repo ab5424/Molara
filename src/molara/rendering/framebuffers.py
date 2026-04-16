@@ -34,7 +34,7 @@ class Framebuffer:
 
     def __init__(self) -> None:
         """Initialize the Framebuffer class."""
-        self.ssaa_factor = 1
+        self.ssaa_factor = 1.0
         self.width = 0
         self.height = 0
         self.buffer_size_factor = 1
