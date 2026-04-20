@@ -123,9 +123,9 @@ lint.ignore = [
 exclude = ["tests", "**/ui_*"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
-possibly-missing-import = "ignore"
-invalid-type-form = "ignore"
+all = "ignore"
+unresolved-reference = "error"
+possibly-unresolved-reference = "error"
 
 [tool.codespell]
 ignore-words-list = "nd,te,TITEL"
