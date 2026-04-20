@@ -200,7 +200,7 @@ class CrystalDialog(QDialog):
 
         :param hide: list of bools that specify which space-group entries should be hidden
         """
-        view = cast(QListView, self.ui.selectSpaceGroup.view())
+        view = cast("QListView", self.ui.selectSpaceGroup.view())
         for i, hide_i in enumerate(hide):
             view.setRowHidden(i, hide_i)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtWidgets import QDialog, QMainWindow
+from PySide6.QtWidgets import QDialog
 
 from molara.gui.layouts.ui_supercell_dialog import Ui_Dialog
 from molara.structure.crystal import Crystal

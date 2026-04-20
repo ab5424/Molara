@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import QDialog, QHeaderView, QMainWindow, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QDialog, QHeaderView, QTableWidget, QTableWidgetItem
 
 from molara.gui.layouts.ui_measuring_tool import Ui_measuring_tool
 

@@ -189,7 +189,8 @@ class Surface3DDialog(QDialog):
         self._main_window.structure_widget.makeCurrent()
         for i in range(2):
             if f"Surface_{i + 1}" in self._main_window.structure_widget.renderer.objects3d:
-                self._main_window.structure_widget.renderer.objects3d[f"Surface_{i + 1}"].wire_frame = self.draw_wire_frame
+                obj3d = self._main_window.structure_widget.renderer.objects3d[f"Surface_{i + 1}"]
+                obj3d.wire_frame = self.draw_wire_frame
 
     def visualize_surfaces(self) -> None:
         """Visualize the surface. A grid has to be set before calling this function."""

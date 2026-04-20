@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from PIL import Image
-from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow
+from PySide6.QtWidgets import QDialog, QFileDialog
 
 from molara.gui.layouts.ui_export_image_dialog import Ui_Dialog
 

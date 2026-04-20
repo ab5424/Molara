@@ -1,5 +1,7 @@
 """Contains the framebuffer class."""
 
+from __future__ import annotations
+
 from OpenGL.GL import (
     GL_COLOR_ATTACHMENT0,
     GL_COLOR_ATTACHMENT1,
@@ -47,7 +49,13 @@ class Framebuffer:
     def create(self, width: int, height: int) -> None:
         """Create a framebuffer object."""
 
-        def create_texture_buffer(texture, var_internal_format, var_format, data_type, attachment) -> None:
+        def create_texture_buffer(
+            texture: int,
+            var_internal_format: int,
+            var_format: int,
+            data_type: int,
+            attachment: int,
+        ) -> None:
             glBindTexture(GL_TEXTURE_2D, texture)
             glTexImage2D(GL_TEXTURE_2D, 0, var_internal_format, self.width, self.height, 0, var_format, data_type, None)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
@@ -62,21 +70,39 @@ class Framebuffer:
         glDrawBuffers(3, [GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2])
 
         self.texture_color_buffer = glGenTextures(1)
-        create_texture_buffer(self.texture_color_buffer, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0)
+        create_texture_buffer(
+            int(self.texture_color_buffer),
+            int(GL_RGBA),
+            int(GL_RGBA),
+            int(GL_UNSIGNED_BYTE),
+            int(GL_COLOR_ATTACHMENT0),
+        )
 
         self.texture_normal_buffer = glGenTextures(1)
-        create_texture_buffer(self.texture_normal_buffer, GL_RGB32F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT1)
+        create_texture_buffer(
+            int(self.texture_normal_buffer),
+            int(GL_RGB32F),
+            int(GL_RGB),
+            int(GL_FLOAT),
+            int(GL_COLOR_ATTACHMENT1),
+        )
 
         self.texture_color_buffer2 = glGenTextures(1)
-        create_texture_buffer(self.texture_color_buffer2, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT2)
+        create_texture_buffer(
+            int(self.texture_color_buffer2),
+            int(GL_RGBA),
+            int(GL_RGBA),
+            int(GL_UNSIGNED_BYTE),
+            int(GL_COLOR_ATTACHMENT2),
+        )
 
         self.texture_depth_buffer = glGenTextures(1)
         create_texture_buffer(
-            self.texture_depth_buffer,
-            GL_DEPTH_COMPONENT,
-            GL_DEPTH_COMPONENT,
-            GL_FLOAT,
-            GL_DEPTH_ATTACHMENT,
+            int(self.texture_depth_buffer),
+            int(GL_DEPTH_COMPONENT),
+            int(GL_DEPTH_COMPONENT),
+            int(GL_FLOAT),
+            int(GL_DEPTH_ATTACHMENT),
         )
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)

@@ -111,7 +111,10 @@ class TrajectoryDialog(QDialog):
             self._main_window.structure_widget.set_structure(self._main_window.mols.all_molecules, reset_view=False)
         else:
             self.ui.overlayButton.setText("Show all")
-            self._main_window.structure_widget.set_structure([self._main_window.mols.get_current_mol()], reset_view=False)
+            self._main_window.structure_widget.set_structure(
+                [self._main_window.mols.get_current_mol()],
+                reset_view=False,
+            )
 
     def get_next_mol(self) -> None:
         """Call molecules object to get the next molecule and update it in the GUI."""
