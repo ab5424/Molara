@@ -47,13 +47,7 @@ class Framebuffer:
     def create(self, width: int, height: int) -> None:
         """Create a framebuffer object."""
 
-        def create_texture_buffer(
-            texture: int,
-            var_internal_format: int,
-            var_format: int,
-            data_type: int,
-            attachment: int,
-        ) -> None:
+        def create_texture_buffer(texture, var_internal_format, var_format, data_type, attachment) -> None:
             glBindTexture(GL_TEXTURE_2D, texture)
             glTexImage2D(GL_TEXTURE_2D, 0, var_internal_format, self.width, self.height, 0, var_format, data_type, None)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)

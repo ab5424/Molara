@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib as mpl
 import numpy as np
@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QMainWindow,
     QVBoxLayout,
+    QWidget,
 )
 
 from molara.gui.layouts.ui_trajectory import Ui_traj_dialog
@@ -31,7 +32,7 @@ class MplCanvas(FigureCanvasQTAgg):
     def __init__(
         self,
         # This argument is necessary to be surpassed.
-        parent: MainWindow | None = None,  # noqa: ARG002
+        parent: QWidget | None = None,  # noqa: ARG002
         width: int = 5,
         height: int = 4,
         dpi: int = 100,
@@ -83,9 +84,14 @@ class TrajectoryDialog(QDialog):
 
         self.show_all = False
 
+    @property
+    def _main_window(self) -> MainWindow:
+        """Return the main window."""
+        return cast("MainWindow", self.parent())
+
     def show_trajectory(self) -> None:
         """Show the all molecules in the current Molecules class automatically."""
-        if not self.parent().mols.num_mols > 1:
+        if not self._main_window.mols.num_mols > 1:
             return
 
         if self.timer.isActive():
@@ -97,57 +103,57 @@ class TrajectoryDialog(QDialog):
 
     def show_all_molecules(self) -> None:
         """Show all molecules in the current Molecules class automatically."""
-        if not self.parent().mols.num_mols > 1:
+        if not self._main_window.mols.num_mols > 1:
             return
         self.show_all = not self.show_all
         if self.show_all:
             self.ui.overlayButton.setText("Show current")
-            self.parent().structure_widget.set_structure(self.parent().mols.all_molecules, reset_view=False)
+            self._main_window.structure_widget.set_structure(self._main_window.mols.all_molecules, reset_view=False)
         else:
             self.ui.overlayButton.setText("Show all")
-            self.parent().structure_widget.set_structure([self.parent().mols.get_current_mol()], reset_view=False)
+            self._main_window.structure_widget.set_structure([self._main_window.mols.get_current_mol()], reset_view=False)
 
     def get_next_mol(self) -> None:
         """Call molecules object to get the next molecule and update it in the GUI."""
-        if not self.parent().mols.num_mols > 1:
+        if not self._main_window.mols.num_mols > 1:
             return
 
-        val = self.parent().mols.mol_index
+        val = self._main_window.mols.mol_index
         self.ui.verticalSlider.setValue(val + 1)
-        self.parent().mols.set_next_mol()
+        self._main_window.mols.set_next_mol()
         self.update_molecule()
-        if self.parent().mols.mol_index + 1 == self.parent().mols.num_mols:
+        if self._main_window.mols.mol_index + 1 == self._main_window.mols.num_mols:
             self.timer.stop()
             self.ui.playStopButton.setText("Play")
 
     def get_prev_mol(self) -> None:
         """Call molecules object to get the previous molecule and update it in the GUI."""
-        if not self.parent().mols.num_mols > 1:
+        if not self._main_window.mols.num_mols > 1:
             return
 
-        val = self.parent().mols.mol_index
+        val = self._main_window.mols.mol_index
         self.ui.verticalSlider.setValue(val - 1)
-        self.parent().mols.set_previous_mol()
+        self._main_window.mols.set_previous_mol()
         self.update_molecule()
 
     def set_slider_range(self) -> None:
         """Set the slider range to the max number of molecules."""
-        self.ui.verticalSlider.setRange(0, int(self.parent().mols.num_mols) - 1)
+        self.ui.verticalSlider.setRange(0, int(self._main_window.mols.num_mols) - 1)
 
     def slide_molecule(self) -> None:
         """Update the molecule and energy plot in dependence of the slider position."""
-        if not self.parent().mols.num_mols > 1:
+        if not self._main_window.mols.num_mols > 1:
             return
 
         index = self.ui.verticalSlider.sliderPosition()
-        self.parent().mols.set_mol_by_id(index)
+        self._main_window.mols.set_mol_by_id(index)
         self.update_molecule()
 
     def update_molecule(self) -> None:
         """Update molecule and delete old molecule."""
-        self.parent().structure_widget.delete_structure()
-        self.parent().structure_widget.set_structure(
-            [self.parent().mols.get_current_mol()],
+        self._main_window.structure_widget.delete_structure()
+        self._main_window.structure_widget.set_structure(
+            [self._main_window.mols.get_current_mol()],
             reset_view=False,
         )
         self.update_energy_plot()
@@ -162,19 +168,19 @@ class TrajectoryDialog(QDialog):
         """
         min_interval = 1
         max_interval = 500
-        self.timer.setInterval(min_interval * (max_interval / min_interval) ** (value * 0.001))
+        self.timer.setInterval(int(min_interval * (max_interval / min_interval) ** (value * 0.001)))
 
     def initial_energy_plot(self) -> None:
         """Plot the energies of the molecules in the molecules object."""
         self.sc.axes.cla()
         (self.energy_plot,) = self.sc.axes.plot(
-            np.arange(self.parent().mols.num_mols),
-            self.parent().mols.energies,
+            np.arange(self._main_window.mols.num_mols),
+            self._main_window.mols.energies,
             "x-",
         )
         (self.current_energy_plot,) = self.sc.axes.plot(
-            self.parent().mols.mol_index,
-            self.parent().mols.energies[self.parent().mols.mol_index],
+            self._main_window.mols.mol_index,
+            self._main_window.mols.energies[self._main_window.mols.mol_index],
             "o",
         )
         self.sc.axes.set_xlabel(r"steps")
@@ -185,7 +191,7 @@ class TrajectoryDialog(QDialog):
 
     def update_energy_plot(self) -> None:
         """Update the energy plot, where the current structure is shown in a different color."""
-        energies, mol_index = self.parent().mols.energies, self.parent().mols.mol_index
+        energies, mol_index = self._main_window.mols.energies, self._main_window.mols.mol_index
         self.current_energy_plot.set_xdata([mol_index])
         self.current_energy_plot.set_ydata([energies[mol_index]])
         self.sc.draw()

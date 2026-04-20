@@ -116,7 +116,7 @@ class Structure:
         coordinates = np.array([atom.position for atom in self.atoms])
 
         max_distance = 2.0 * vdw_radii.max() * self.bond_distance_factor
-        tree = spatial.cKDTree(coordinates)
+        tree = spatial.KDTree(coordinates)
 
         for i, j in tree.query_pairs(max_distance):
             atom1_radius, atom2_radius = vdw_radii[i], vdw_radii[j]

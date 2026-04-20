@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from PySide6.QtWidgets import (
@@ -19,6 +19,7 @@ from molara.rendering.atom_labels import init_atom_number
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from molara.gui.main_window import MainWindow
     from molara.structure.crystal import Crystal
     from molara.structure.molecule import Molecule
     from molara.structure.structure import Structure
@@ -29,7 +30,7 @@ __copyright__ = "Copyright 2024, Molara"
 class StructureCustomizerDialog(QDialog):
     """Dialog for manipulating appearance of trajectories."""
 
-    def __init__(self, parent: QMainWindow = None) -> None:
+    def __init__(self, parent: QMainWindow | None = None) -> None:
         """Initialize the trajectory dialog.
 
         :param parent: parent widget (main window)
@@ -77,6 +78,11 @@ class StructureCustomizerDialog(QDialog):
         """Load the default settings."""
         self.load_settings("Default")
 
+    @property
+    def _main_window(self) -> MainWindow:
+        """Return the main window."""
+        return cast("MainWindow", self.parent())
+
     def update_settings_box(self) -> None:
         """Update the settings box."""
         if not self.home_path.joinpath("settings/structure").exists():
@@ -112,7 +118,7 @@ class StructureCustomizerDialog(QDialog):
         with Path(settings_file).open("r", encoding="utf-8") as f:
             settings = json.load(f)
         self.load_settings_dict(settings)
-        if self.parent().structure_widget.structures:
+        if self._main_window.structure_widget.structures:
             self.apply_changes()
 
     def create_settings_dict(self) -> dict:
@@ -194,7 +200,7 @@ class StructureCustomizerDialog(QDialog):
 
     def apply_changes(self) -> None:
         """Set the size of the cylinders."""
-        structures = self.parent().structure_widget.structures
+        structures = self._main_window.structure_widget.structures
         for structure in structures:
             if self.stick_mode:
                 structure.drawer.stick_mode = True
@@ -220,23 +226,23 @@ class StructureCustomizerDialog(QDialog):
 
         if structures:
             if self.numbers:
-                self.parent().structure_widget.atom_indices_arrays = init_atom_number(structures[0])
-                self.parent().structure_widget.number_scale = self.ui.indexSizeSpinBox.value()
-            self.parent().structure_widget.show_atom_indices = self.numbers
+                self._main_window.structure_widget.atom_indices_arrays = init_atom_number(structures[0])
+                self._main_window.structure_widget.number_scale = self.ui.indexSizeSpinBox.value()
+            self._main_window.structure_widget.show_atom_indices = self.numbers
 
-            self.parent().structure_widget.update_molecule_spheres_cylinders()
-        self.parent().structure_widget.update()
+            self._main_window.structure_widget.update_molecule_spheres_cylinders()
+        self._main_window.structure_widget.update()
 
     def toggle_stick_mode(self) -> None:
         """Toggle between stick and ball mode."""
-        if self.parent().structure_widget.structures[0].has_bonds:
+        if self._main_window.structure_widget.structures[0].has_bonds:
             self.stick_mode = not self.stick_mode
             if self.stick_mode:
                 if not self.bonds:
                     self.toggle_bonds()
                     self.bonds = True
                 self.ui.viewModeButton.setText("Ball Mode")
-                self.parent().ui.actionToggle_Bonds.setEnabled(False)
+                self._main_window.ui.actionToggle_Bonds.setEnabled(False)
                 self.ui.toggleBondsButton.setEnabled(False)
                 self.ui.stickSizeSpinBox.setEnabled(True)
                 self.ui.ballSizeSpinBox.setEnabled(False)
@@ -249,7 +255,7 @@ class StructureCustomizerDialog(QDialog):
 
     def toggle_bonds(self) -> None:
         """Toggle bonds on and off."""
-        if self.parent().structure_widget.structures[0].has_bonds:
+        if self._main_window.structure_widget.structures[0].has_bonds:
             self.bonds = not self.bonds
             self.set_bonds(self.bonds)
             self.apply_changes()
@@ -262,7 +268,7 @@ class StructureCustomizerDialog(QDialog):
     def set_numbers(self, numbers: bool) -> None:
         """Set numbers to True or False."""
         self.numbers = numbers
-        structure = self.parent().structure_widget.structures[0]
+        structure = self._main_window.structure_widget.structures[0]
         if self.numbers:
             if len(structure.atoms) < self.max_atoms_for_numbers:
                 self.ui.toggleNumbersButton.setText("Hide Indices")
@@ -275,7 +281,7 @@ class StructureCustomizerDialog(QDialog):
 
     def set_bonds(self, bonds: bool) -> None:
         """Set bonds to True or False."""
-        if self.parent().structure_widget.structures and self.parent().structure_widget.structures[0].has_bonds:
+        if self._main_window.structure_widget.structures and self._main_window.structure_widget.structures[0].has_bonds:
             self.bonds = bonds
             if self.bonds:
                 self.ui.toggleBondsButton.setText("Hide Bonds")
