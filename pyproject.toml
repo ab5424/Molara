@@ -117,9 +117,9 @@ lint.ignore = [
   "FBT002", # Boolean default positional argument in function definition
   "INP001", # File {name} is part or an implicit namespace package. Add an `__init__.py`.
   ]
-lint.extend-per-file-ignores = [
-  "tests/**" = ["S101"],   # Use of assert detected
-  ]
+  
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/**" = ["S101"]  # Use of assert detected
 
 [tool.ty.src]
 exclude = ["tests", "**/ui_*"]
