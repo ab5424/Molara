@@ -107,7 +107,9 @@ class Renderer:
 
         :param mode: Mode of the renderer.
         """
-        assert mode in MODES
+        if mode not in MODES:
+            msg = f"Invalid mode: {mode!r}. Must be one of {MODES}."
+            raise ValueError(msg)
         self.mode = mode
         if mode in (SHADED, OUTLINED_SHADED):
             self.shade = "Shaded"

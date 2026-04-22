@@ -320,11 +320,13 @@ class Crystal(Structure):
 
         :params atoms: ase.Atoms object
         """
-        assert atoms.get_pbc().all(), (
-            "You are attempting to create a crystal from a non-periodic ase.Atoms object. "
-            "For non-periodic systems, use Molecule.from_ase(). "
-            "Partially periodic systems are not supported yet."
-        )
+        if not atoms.get_pbc().all():
+            msg = (
+                "You are attempting to create a crystal from a non-periodic ase.Atoms object. "
+                "For non-periodic systems, use Molecule.from_ase(). "
+                "Partially periodic systems are not supported yet."
+            )
+            raise ValueError(msg)
         return cls(
             atoms.get_atomic_numbers(),
             atoms.get_scaled_positions(),

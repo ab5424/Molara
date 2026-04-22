@@ -29,7 +29,9 @@ def fetch_color_table() -> bs4.element.Tag:
     for table in soup.find_all("table", {"class": "wikitable"}):
         if "CPK coloring" in table.get_text():
             break
-    assert table is not None, "Table not found."
+    if table is None:
+        msg = "Table not found."
+        raise ValueError(msg)
 
     return table
 

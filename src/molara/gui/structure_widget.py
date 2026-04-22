@@ -392,7 +392,8 @@ class StructureWidget(QOpenGLWidget):
         # the unit cell boundaries shall be drawn anew if:
         # 1.) a box was not drawn before and function is called as a "toggle", not an update
         # 2.) a box was drawn before, but shall be updated (crystal structure changed)
-        assert isinstance(self.structures[0], Crystal)
+        if not isinstance(self.structures[0], Crystal):
+            return
 
         positions = self.structures[0].unitcell_boundaries_positions
 

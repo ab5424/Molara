@@ -258,7 +258,9 @@ class BuilderDialog(QDialog):
         mol = self.main_window.mols.mols[0]
         # add third atom
         if count_atoms == 2:  # noqa: PLR2004
-            assert angle is not None
+            if angle is None:
+                msg = "Angle must be provided for a third atom."
+                raise ValueError(msg)
             coord = np.array([dist * np.sin(angle), 0, dist * np.cos(angle)])
             coord[2] = (
                 mol.atoms[atom_ids[0]].position[2] - coord[2]
@@ -279,8 +281,9 @@ class BuilderDialog(QDialog):
             vec2 = np.array([0, 1.0, 0])
         vec3 = np.cross(vec1, vec2)
         vec3 /= np.linalg.norm(vec3)
-        assert angle is not None
-        assert dihedral is not None
+        if angle is None or dihedral is None:
+            msg = "Angle and dihedral must be provided for additional atoms."
+            raise ValueError(msg)
         tmp = dist * np.sin(angle)
         coord = mol.atoms[at1_id].position + dist * np.cos(angle) * vec1
         coord += tmp * np.cos(dihedral) * vec2 + tmp * np.sin(dihedral) * vec3
