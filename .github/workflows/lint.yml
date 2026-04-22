@@ -27,8 +27,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install ruff mypy pyright cython-lint --upgrade --system
-        uv pip install types-requests --system
+        uv pip install ruff ty cython-lint --upgrade --system
         uv pip install -e . --system
 
     - name: ruff
@@ -37,15 +36,10 @@ jobs:
         ruff check .
         ruff format --check .
 
-    - name: mypy
+    - name: ty
       run: |
-        mypy --version
-        mypy .
-
-    - name: pyright
-      run: |
-        pyright --version
-        pyright .
+        ty --version
+        ty check .
 
     - name: cython-lint
       run: |

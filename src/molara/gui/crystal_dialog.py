@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 import numpy as np
 from PySide6.QtCore import SIGNAL
-from PySide6.QtWidgets import QDialog, QMainWindow, QTableWidgetItem
+from PySide6.QtWidgets import QDialog, QListView, QMainWindow, QTableWidgetItem
 
 from molara.gui.layouts.ui_crystalstructure_dialog import Ui_CrystalDialog
 from molara.structure.atom import element_symbol_to_atomic_number
 from molara.structure.crystal import Crystal
+
+if TYPE_CHECKING:
+    from molara.gui.main_window import MainWindow
 
 RIGHTANGLE = 90.0
 ENABLED, DISABLED = True, False
@@ -120,7 +125,7 @@ class CrystalDialog(QDialog):
             basis_vectors=basis_vectors,
             supercell_dims=supercell_dims,
         )
-        self.parent().ui.openGLWidget.set_structure([mycrystal])  # type: ignore[attr-defined]
+        cast("MainWindow", self.parent()).ui.openGLWidget.set_structure([mycrystal])
 
     def bc_equals_a(self, value: float) -> None:
         """Set b and c lattice constants equal to a.
@@ -195,7 +200,7 @@ class CrystalDialog(QDialog):
 
         :param hide: list of bools that specify which space-group entries should be hidden
         """
-        view = self.ui.selectSpaceGroup.view()
+        view = cast("QListView", self.ui.selectSpaceGroup.view())
         for i, hide_i in enumerate(hide):
             view.setRowHidden(i, hide_i)
 

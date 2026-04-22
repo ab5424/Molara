@@ -384,7 +384,7 @@ class MoldenImporter(MoleculesImporter):
 class CubeImporter(MoleculesImporter):
     """Importer from *.molden files."""
 
-    def load(self) -> Molecules:
+    def load(self) -> Molecules:  # noqa: C901
         """Read the file in self.path and creates a Molecules object."""
         molecules = Molecules()
 
@@ -403,9 +403,11 @@ class CubeImporter(MoleculesImporter):
                 number_of_values = int(atom_line[4])
             except IndexError:
                 number_of_values = 1
+            if number_of_values != 1:
+                msg = "Only one value per grid point is supported"
+                raise ValueError(msg)
         else:
             n_atoms = -n_atoms
-        assert number_of_values == 1, "Only one value per grid point is supported"
 
         # Get voxel info
         number_of_voxels = np.zeros(3, dtype=np.int64)

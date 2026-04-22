@@ -26,7 +26,7 @@ def main(test: bool = False) -> None:
     _format = QSurfaceFormat()
     _format.setVersion(3, 3)
     _format.setSamples(4)
-    _format.setProfile(QSurfaceFormat.CoreProfile)  # type: ignore[attr-defined]
+    _format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
     QSurfaceFormat.setDefaultFormat(_format)
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)

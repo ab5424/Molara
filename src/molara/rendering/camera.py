@@ -196,7 +196,7 @@ class Camera:
         self.last_translation = self.translation
         self.update()
 
-    def set_distance_from_target(self, num_steps: int) -> None:
+    def set_distance_from_target(self, num_steps: float) -> None:
         """Set the distance between the camera and its target.
 
         :param num_steps: Number of zoom steps. From this, factor is calculated that is multiplied

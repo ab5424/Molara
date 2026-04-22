@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from PySide6.QtGui import QMouseEvent, QWheelEvent
     from PySide6.QtWidgets import QWidget
 
+    from molara.gui.main_window import MainWindow
     from molara.structure.molecule import Molecule
     from molara.structure.structure import Structure
 
@@ -37,7 +38,7 @@ class StructureWidget(QOpenGLWidget):
         :param parent: parent widget (main window's central widget)
         """
         self.central_widget = parent
-        self.main_window = self.central_widget.parent()  # type: ignore[method-assign, assignment]
+        self.main_window: MainWindow = cast("MainWindow", self.central_widget.parent())
         QOpenGLWidget.__init__(self, parent)
 
         self.structures: list[Structure | Molecule | Crystal] = []
@@ -391,7 +392,8 @@ class StructureWidget(QOpenGLWidget):
         # the unit cell boundaries shall be drawn anew if:
         # 1.) a box was not drawn before and function is called as a "toggle", not an update
         # 2.) a box was drawn before, but shall be updated (crystal structure changed)
-        assert isinstance(self.structures[0], Crystal)
+        if not isinstance(self.structures[0], Crystal):
+            return
 
         positions = self.structures[0].unitcell_boundaries_positions
 
@@ -412,7 +414,7 @@ class StructureWidget(QOpenGLWidget):
 
         self.main_window.update_action_texts()
 
-    def identify_selected_sphere(self, xpos: int, ypos: int) -> int:
+    def identify_selected_sphere(self, xpos: float, ypos: float) -> int:
         """Return index of sphere that has been selected by clicking.
 
         :param xpos: x position of the mouse-click event

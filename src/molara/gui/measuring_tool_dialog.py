@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import QDialog, QHeaderView, QMainWindow, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QDialog, QHeaderView, QTableWidget, QTableWidgetItem
 
 from molara.gui.layouts.ui_measuring_tool import Ui_measuring_tool
 
 if TYPE_CHECKING:
+    from molara.gui.main_window import MainWindow
     from molara.structure.structure import Structure
 
 __copyright__ = "Copyright 2024, Molara"
@@ -20,7 +21,7 @@ __copyright__ = "Copyright 2024, Molara"
 class MeasurementDialog(QDialog):
     """Dialog for displaying measurements."""
 
-    def __init__(self, parent: QMainWindow) -> None:  # noqa: PLR0915
+    def __init__(self, parent: MainWindow) -> None:  # noqa: PLR0915
         """Initialize the measurement dialog.
 
         :param parent: the MainWindow widget
@@ -28,7 +29,7 @@ class MeasurementDialog(QDialog):
         super().__init__(
             parent,
         )
-        self.main_window = parent
+        self.main_window: MainWindow = parent
 
         self.ui = Ui_measuring_tool()
         self.ui.setupUi(self)
@@ -45,7 +46,7 @@ class MeasurementDialog(QDialog):
         self.ui.tablePositions.setRowCount(4)
 
         proto_item = QTableWidgetItem()
-        proto_item.setTextAlignment(Qt.AlignRight)
+        proto_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
         self.ui.tablePositions.setItemPrototype(proto_item)
 
         # resize modes: specify how the tables are filled with the columns / rows
@@ -53,7 +54,11 @@ class MeasurementDialog(QDialog):
             for i, mode in enumerate(modes):
                 obj.setSectionResizeMode(i, mode)
 
-        fixed, resize, stretch = QHeaderView.Fixed, QHeaderView.ResizeToContents, QHeaderView.Stretch
+        fixed, resize, stretch = (
+            QHeaderView.ResizeMode.Fixed,
+            QHeaderView.ResizeMode.ResizeToContents,
+            QHeaderView.ResizeMode.Stretch,
+        )
 
         header_positions = self.ui.tablePositions.horizontalHeader()
         set_resize_modes(header_positions, [resize, stretch, resize, resize, resize])
@@ -82,7 +87,7 @@ class MeasurementDialog(QDialog):
             for i, (label_i, color_i) in enumerate(zip(labels, colors, strict=True)):
                 item = QTableWidgetItem(label_i)
                 if align_right:
-                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 if color_i is not None:
                     brush = QBrush(QColor(color_i))
                     item.setForeground(brush)
@@ -139,7 +144,7 @@ class MeasurementDialog(QDialog):
                 items.append(QTableWidgetItem(f"{pos[2]:.3f}"))
 
                 for item in items:
-                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                     self.ui.tablePositions.setItem(i, items.index(item), item)
 
             else:
@@ -156,7 +161,7 @@ class MeasurementDialog(QDialog):
                     structure.atoms[selected_atoms[i]].position - structure.atoms[selected_atoms[k]].position,
                 )
                 item = QTableWidgetItem(f"{d:.3f}" + " \u00c5")
-                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 self.ui.tableDistances.setItem(i, k - 1, item)
 
     def display_angles(self, structure: Structure, selected_atoms: list) -> None:
@@ -174,7 +179,7 @@ class MeasurementDialog(QDialog):
                     np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)),
                 )
                 item = QTableWidgetItem(f"{np.degrees(a):.3f}" + " \u00b0")
-                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 self.ui.tableAngles.setItem(i, 0, item)
             else:
                 self.ui.tableAngles.setItem(i, 0, QTableWidgetItem(""))
@@ -205,7 +210,7 @@ class MeasurementDialog(QDialog):
         a = np.arctan2(y, x)
         a_deg = np.degrees(a)
         item = QTableWidgetItem(f"{a_deg:.3f}" + " \u00b0")
-        item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.ui.tableAngles.setItem(2, 0, item)
 
     def reject(self) -> None:

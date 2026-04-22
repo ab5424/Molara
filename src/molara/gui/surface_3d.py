@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from PySide6.QtGui import QColor
@@ -16,13 +16,14 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     from PySide6.QtGui import QCloseEvent
 
+    from molara.gui.main_window import MainWindow
     from molara.structure.molecule import Molecule
 
 
 class Surface3DDialog(QDialog):
     """Class for 3D surfaces, all dialogues plotting surface will inherit from this class."""
 
-    def __init__(self, parent: QMainWindow = None) -> None:
+    def __init__(self, parent: QMainWindow | None = None) -> None:
         """Initialize the class."""
         super().__init__(parent)
         self.molecule: None | Molecule = None
@@ -44,6 +45,11 @@ class Surface3DDialog(QDialog):
         self.color_surface_2_dialog = QColorDialog()
         self.color_surface_1_dialog.accepted.connect(self.change_color_surface_1)
         self.color_surface_2_dialog.accepted.connect(self.change_color_surface_2)
+
+    @property
+    def _main_window(self) -> MainWindow:
+        """Return the main window."""
+        return cast("MainWindow", self.parent())
 
     def show_color_dialog_1(self) -> None:
         """Show the color dialog for the first surface."""
@@ -77,7 +83,7 @@ class Surface3DDialog(QDialog):
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
         """Close the dialog."""
         self.remove_surfaces()
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()
         event.accept()
 
     def set_iso_value(self, iso_value: float) -> None:
@@ -139,11 +145,11 @@ class Surface3DDialog(QDialog):
 
     def remove_surfaces(self) -> None:
         """Remove the surfaces."""
-        self.parent().structure_widget.makeCurrent()
+        self._main_window.structure_widget.makeCurrent()
         for name in ["Surface_1", "Surface_2"]:
-            if name in self.parent().structure_widget.renderer.objects3d:
-                self.parent().structure_widget.renderer.remove_object(name)
-        self.parent().structure_widget.update()
+            if name in self._main_window.structure_widget.renderer.objects3d:
+                self._main_window.structure_widget.renderer.remove_object(name)
+        self._main_window.structure_widget.update()
 
     def display_surfaces(self) -> None:
         """Display the surfaces."""
@@ -158,32 +164,33 @@ class Surface3DDialog(QDialog):
         """Draw the surfaces."""
         self.remove_surfaces()
         if self.vertices_1.size != 0:
-            self.parent().structure_widget.renderer.draw_polygon(
+            self._main_window.structure_widget.renderer.draw_polygon(
                 "Surface_1",
                 self.vertices_1,
                 np.array([self.color_surface_1 / 255], dtype=np.float32),
             )
         if self.vertices_2.size != 0:
-            self.parent().structure_widget.renderer.draw_polygon(
+            self._main_window.structure_widget.renderer.draw_polygon(
                 "Surface_2",
                 self.vertices_2,
                 np.array([self.color_surface_2 / 255], dtype=np.float32),
             )
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()
 
     def toggle_wire_mesh(self) -> None:
         """Display the orbitals in the wire mesh mode."""
-        self.parent().structure_widget.makeCurrent()
+        self._main_window.structure_widget.makeCurrent()
         self.draw_wire_frame = not self.draw_wire_frame
         self.update_wire_frame_surfaces()
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()
 
     def update_wire_frame_surfaces(self) -> None:
         """Set the wire frame mode."""
-        self.parent().structure_widget.makeCurrent()
+        self._main_window.structure_widget.makeCurrent()
         for i in range(2):
-            if f"Surface_{i + 1}" in self.parent().structure_widget.renderer.objects3d:
-                self.parent().structure_widget.renderer.objects3d[f"Surface_{i + 1}"].wire_frame = self.draw_wire_frame
+            if f"Surface_{i + 1}" in self._main_window.structure_widget.renderer.objects3d:
+                obj3d = self._main_window.structure_widget.renderer.objects3d[f"Surface_{i + 1}"]
+                obj3d.wire_frame = self.draw_wire_frame
 
     def visualize_surfaces(self) -> None:
         """Visualize the surface. A grid has to be set before calling this function."""

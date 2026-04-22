@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from copy import deepcopy
-from typing import TYPE_CHECKING, Concatenate, ParamSpec
+from typing import TYPE_CHECKING, Concatenate, ParamSpec, cast
 
 import numpy as np
 from PySide6.QtWidgets import QDialog, QTableWidgetItem
@@ -62,8 +62,8 @@ class BuilderDialog(QDialog):
 
         self.ui.tableWidget.acceptDrops()
 
-        self.main_window: MainWindow = self.parent()
-        self.structure_widget: StructureWidget = self.parent().structure_widget
+        self.main_window: MainWindow = cast("MainWindow", self.parent())
+        self.structure_widget: StructureWidget = self.main_window.structure_widget
 
         self.main_window.mols = Molecules()
         self.z_matrix: list[dict] = []
@@ -258,6 +258,9 @@ class BuilderDialog(QDialog):
         mol = self.main_window.mols.mols[0]
         # add third atom
         if count_atoms == 2:  # noqa: PLR2004
+            if angle is None:
+                msg = "Angle must be provided for a third atom."
+                raise ValueError(msg)
             coord = np.array([dist * np.sin(angle), 0, dist * np.cos(angle)])
             coord[2] = (
                 mol.atoms[atom_ids[0]].position[2] - coord[2]
@@ -278,6 +281,9 @@ class BuilderDialog(QDialog):
             vec2 = np.array([0, 1.0, 0])
         vec3 = np.cross(vec1, vec2)
         vec3 /= np.linalg.norm(vec3)
+        if angle is None or dihedral is None:
+            msg = "Angle and dihedral must be provided for additional atoms."
+            raise ValueError(msg)
         tmp = dist * np.sin(angle)
         coord = mol.atoms[at1_id].position + dist * np.cos(angle) * vec1
         coord += tmp * np.cos(dihedral) * vec2 + tmp * np.sin(dihedral) * vec3
@@ -419,20 +425,24 @@ class BuilderDialog(QDialog):
         dihedral: str = "0"
 
         if row >= 0:
-            element = str(self.ui.tableWidget.item(row, 0).text().capitalize())
+            item_0 = self.ui.tableWidget.item(row, 0)
+            element = str(item_0.text().capitalize()) if item_0 is not None else ""
             param_type_validity = bool(re.match("^[A-Z]", element))
             param_type_validity = bool(element_symbol_to_atomic_number(element)) and param_type_validity
 
         if row >= 1:
-            dist = self.ui.tableWidget.item(row, 2).text()
+            item_2 = self.ui.tableWidget.item(row, 2)
+            dist = item_2.text() if item_2 is not None else "0"
             param_type_validity = bool(re.match(r"^-?\d+(\.\d+)?$", dist)) and param_type_validity
 
         if row >= 2:  # noqa: PLR2004
-            angle = self.ui.tableWidget.item(row, 4).text()
+            item_4 = self.ui.tableWidget.item(row, 4)
+            angle = item_4.text() if item_4 is not None else "0"
             param_type_validity = bool(re.match(r"^-?\d+(\.\d+)?$", angle)) and param_type_validity
 
         if row >= 3:  # noqa: PLR2004
-            dihedral = self.ui.tableWidget.item(row, 6).text()
+            item_6 = self.ui.tableWidget.item(row, 6)
+            dihedral = item_6.text() if item_6 is not None else "0"
             param_type_validity = bool(re.match(r"^-?\d+(\.\d+)?$", dihedral)) and param_type_validity
 
         if not param_type_validity:

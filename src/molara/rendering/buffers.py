@@ -202,7 +202,9 @@ def setup_texture_buffer(texture: bool | Image.Image) -> int:
 
     :param texture: The texture to be used, as a PIL Image object.
     """
-    assert isinstance(texture, Image.Image)
+    if not isinstance(texture, Image.Image):
+        msg = "texture must be a PIL Image object."
+        raise TypeError(msg)
     texture_id = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, texture_id)
 

@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtWidgets import QDialog, QMainWindow
+from PySide6.QtWidgets import QDialog
 
 from molara.gui.layouts.ui_supercell_dialog import Ui_Dialog
 from molara.structure.crystal import Crystal
 
 if TYPE_CHECKING:
+    from molara.gui.main_window import MainWindow
+
     intvec3 = list[int]
 
 __copyright__ = "Copyright 2024, Molara"
@@ -22,7 +24,7 @@ class SupercellDialog(QDialog):
     and passed to main window"s OpenGL widget for rendering.
     """
 
-    def __init__(self, parent: QMainWindow) -> None:
+    def __init__(self, parent: MainWindow) -> None:
         """Create a CrystalDialog object.
 
         :param parent: parent widget (main window)
@@ -32,7 +34,7 @@ class SupercellDialog(QDialog):
         )  # main window widget is passed as a parent, so dialog is closed if main window is closed.
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        self.main_window = parent
+        self.main_window: MainWindow = parent
         # the supercell_dims attribute's purpose is to be overwritten
         # by a list that is passed by a Crystal object. The entries of this
         # list are changed in the accept routine, thus changing the original
@@ -47,7 +49,7 @@ class SupercellDialog(QDialog):
         :param supercell_dims: supercell dimensions (e.g. [2, 4, 3] for 2x4x3 supercell)
         """
         self.set_supercell_dims(supercell_dims)
-        return self.exec()
+        return bool(self.exec())
 
     def set_event_handlers(self) -> None:
         """Set event handlers for supercell dialog."""

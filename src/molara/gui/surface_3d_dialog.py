@@ -18,7 +18,7 @@ __copyright__ = "Copyright 2024, Molara"
 class CubeFileDialog(Surface3DDialog):
     """Dialog for displaying MOs."""
 
-    def __init__(self, parent: QMainWindow = None) -> None:
+    def __init__(self, parent: QMainWindow | None = None) -> None:
         """Initialize the MOs dialog.
 
         params:
@@ -70,10 +70,11 @@ class CubeFileDialog(Surface3DDialog):
 
     def initialize_dialog(self) -> None:
         """Initialize the dialog."""
-        if not self.parent().structure_widget.structures[0].voxel_grid.is_initialized:
+        if not self._main_window.structure_widget.structures[0].voxel_grid.is_initialized:
             return
-        self.set_molecule(self.parent().structure_widget.structures[0])
-        assert self.molecule is not None
+        self.set_molecule(self._main_window.structure_widget.structures[0])
+        if self.molecule is None:
+            return
         self.set_voxel_grid(self.molecule.voxel_grid)
         self.set_iso_value(self.ui.isoSpinBox.value())
         self.update_color_buttons()

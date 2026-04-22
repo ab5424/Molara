@@ -1,6 +1,5 @@
 """Contains the rendering function for the opengl widget."""
 
-# mypy: disable-error-code="name-defined"
 from __future__ import annotations
 
 import ctypes
@@ -91,7 +90,7 @@ class Renderer:
         # supersampling anti-aliasing factor
         self.ssaa_factor = 1.2
 
-        self.device_pixel_ratio = 1
+        self.device_pixel_ratio: float = 1.0
         self.objects3d: dict = {}
         self.textured_objects3d: dict = {}
         self.screen_vao = -1
@@ -108,7 +107,9 @@ class Renderer:
 
         :param mode: Mode of the renderer.
         """
-        assert mode in MODES
+        if mode not in MODES:
+            msg = f"Invalid mode: {mode!r}. Must be one of {MODES}."
+            raise ValueError(msg)
         self.mode = mode
         if mode in (SHADED, OUTLINED_SHADED):
             self.shade = "Shaded"
@@ -542,7 +543,7 @@ class Renderer:
 
     def render_objects(self) -> None:
         """Render the objects in the scene."""
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glClear(int(GL_COLOR_BUFFER_BIT) | int(GL_DEPTH_BUFFER_BIT))
         glEnable(GL_DEPTH_TEST)
 
         self._init_rendering(shader_name="Main" + self.shade)
@@ -567,7 +568,7 @@ class Renderer:
         glBindFramebuffer(GL_FRAMEBUFFER, self.default_framebuffer)
         glViewport(0, 0, int(width * self.device_pixel_ratio), int(height * self.device_pixel_ratio))
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glClear(int(GL_COLOR_BUFFER_BIT) | int(GL_DEPTH_BUFFER_BIT))
         glDisable(GL_DEPTH_TEST)
 
         glUniform1i(self.shaders[shader_name].get_uniform_location("screenTexture"), 0)  # Texture unit 0
@@ -612,7 +613,7 @@ class Renderer:
         self.framebuffers["Inter"].bind()
 
         # Reset framebuffer
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glClear(int(GL_COLOR_BUFFER_BIT) | int(GL_DEPTH_BUFFER_BIT))
         glDisable(GL_DEPTH_TEST)
 
         # Bind textures

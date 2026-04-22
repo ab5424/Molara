@@ -30,7 +30,7 @@ __copyright__ = "Copyright 2024, Molara"
 class MOsDialog(Surface3DDialog):
     """Dialog for displaying MOs."""
 
-    def __init__(self, parent: QMainWindow = None) -> None:  # noqa: PLR0915
+    def __init__(self, parent: QMainWindow | None = None) -> None:  # noqa: PLR0915
         """Initialize the MOs dialog.
 
         params:
@@ -44,7 +44,7 @@ class MOsDialog(Surface3DDialog):
         self.atoms: None | list[Atom] = None
 
         # Voxel grid parameters
-        self.size = np.zeros(3, dtype=np.float64)
+        self.grid_size = np.zeros(3, dtype=np.float64)
         self.direction = np.zeros((3, 3), dtype=np.float64)
         self.origin = np.zeros(3, dtype=np.float64)
         self.voxel_grid_parameters_changed = True
@@ -173,12 +173,12 @@ class MOsDialog(Surface3DDialog):
     def initialize_dialog(self) -> None:
         """Call all the functions to initialize all the labels and buttons and so on."""
         # Check if a structure with MOs is loaded
-        if not self.parent().structure_widget.structures:
+        if not self._main_window.structure_widget.structures:
             return
-        if self.parent().structure_widget.structures[0].mos.coefficients.size == 0:
+        if self._main_window.structure_widget.structures[0].mos.coefficients.size == 0:
             return
         # Set all molecule related variables
-        self.set_molecule(self.parent().structure_widget.structures[0])
+        self.set_molecule(self._main_window.structure_widget.structures[0])
         if self.molecule is None:
             msg = "No molecule loaded"
             raise ValueError(msg)
@@ -272,9 +272,9 @@ class MOsDialog(Surface3DDialog):
                 obj.setSectionResizeMode(i, mode)
 
         _, __, stretch = (
-            QHeaderView.Fixed,
-            QHeaderView.ResizeToContents,
-            QHeaderView.Stretch,
+            QHeaderView.ResizeMode.Fixed,
+            QHeaderView.ResizeMode.ResizeToContents,
+            QHeaderView.ResizeMode.Stretch,
         )
 
         self.ui.orbitalSelector.setColumnCount(2)
@@ -318,12 +318,12 @@ class MOsDialog(Surface3DDialog):
         # Fill the selector with energies rounded up to 3 digits and all the numbers aligned to the right
         for i in range(start, max_number_of_orbitals):
             energy_item = QTableWidgetItem()
-            energy_item.setTextAlignment(Qt.AlignRight)
+            energy_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
             energy_item.setText(f"{self.mos.energies[i]:.3f}")
             self.ui.orbitalSelector.setItem(i - start, 0, energy_item)
 
             occupation_item = QTableWidgetItem()
-            occupation_item.setTextAlignment(Qt.AlignRight)
+            occupation_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
             occupation_item.setText(f"{self.mos.occupations[i]:.3f}")
             self.ui.orbitalSelector.setItem(i - start, 1, occupation_item)
 
@@ -332,7 +332,7 @@ class MOsDialog(Surface3DDialog):
     def calculate_minimum_box_size(self) -> None:
         """Calculate the minimum box size to fit the molecular orbitals."""
         max_x = min_x = max_y = min_y = max_z = min_z = 0
-        for atom in self.parent().structure_widget.structures[0].atoms:
+        for atom in self._main_window.structure_widget.structures[0].atoms:
             max_x = max(atom.position[0], max_x)
             min_x = min(atom.position[0], min_x)
             max_y = max(atom.position[1], max_y)
@@ -363,7 +363,7 @@ class MOsDialog(Surface3DDialog):
         """Calculate the corners of the cube."""
         origin = self.origin
         direction = self.direction
-        size = self.size
+        size = self.grid_size
         corners = np.zeros((8, 3), dtype=np.float64)
         for i in range(8):
             corners[i, :] = (
@@ -376,7 +376,7 @@ class MOsDialog(Surface3DDialog):
 
     def toggle_box(self) -> None:
         """Toggle the cube."""
-        self.parent().structure_widget.makeCurrent()
+        self._main_window.structure_widget.makeCurrent()
         self.display_box = not self.display_box
         if not self.display_box:
             self.remove_box()
@@ -387,17 +387,17 @@ class MOsDialog(Surface3DDialog):
 
     def remove_box(self) -> None:
         """Remove the box."""
-        self.parent().structure_widget.makeCurrent()
-        if "MOBox_cylinders" in self.parent().structure_widget.renderer.objects3d:
-            self.parent().structure_widget.renderer.remove_object("MOBox_cylinders")
-        if "MOBox_spheres" in self.parent().structure_widget.renderer.objects3d:
-            self.parent().structure_widget.renderer.remove_object("MOBox_spheres")
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.makeCurrent()
+        if "MOBox_cylinders" in self._main_window.structure_widget.renderer.objects3d:
+            self._main_window.structure_widget.renderer.remove_object("MOBox_cylinders")
+        if "MOBox_spheres" in self._main_window.structure_widget.renderer.objects3d:
+            self._main_window.structure_widget.renderer.remove_object("MOBox_spheres")
+        self._main_window.structure_widget.update()
 
     def scale_box(self) -> None:
         """Scale the box to fit the molecular orbitals."""
-        self.size = self.minimum_box_size + self.ui.cubeBoxSizeSpinBox.value() + self.initial_box_size
-        self.origin = self.box_center - self.size / 2
+        self.grid_size = self.minimum_box_size + self.ui.cubeBoxSizeSpinBox.value() + self.initial_box_size
+        self.origin = self.box_center - self.grid_size / 2
 
     def calculate_and_show_new_box(self) -> None:
         """Calculate and show a new box."""
@@ -408,7 +408,7 @@ class MOsDialog(Surface3DDialog):
 
     def calculate_new_box(self) -> None:
         """Calculate a new box."""
-        self.parent().structure_widget.makeCurrent()
+        self._main_window.structure_widget.makeCurrent()
         self.remove_box()
         self.scale_box()
         self.box_corners = self.calculate_corners_of_box()
@@ -435,21 +435,21 @@ class MOsDialog(Surface3DDialog):
 
     def draw_box(self) -> None:
         """Draw the box to see where the mos will be calculated."""
-        self.parent().structure_widget.renderer.draw_cylinders_from_to(
+        self._main_window.structure_widget.renderer.draw_cylinders_from_to(
             "MOBox_cylinders",
             self.box_positions,
             self.box_radii,
             self.box_colors,
             10,
         )
-        self.parent().structure_widget.renderer.draw_spheres(
+        self._main_window.structure_widget.renderer.draw_spheres(
             "MOBox_spheres",
             np.array(self.box_corners, dtype=np.float32),
             self.box_radii[:8],
             self.box_colors,
             10,
         )
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()
 
     def voxel_size_value(self, voxel_size_min: float = 0.05, voxel_size_max: float = 0.35) -> float:
         """Get the voxel size value from the resolution.
@@ -482,9 +482,9 @@ class MOsDialog(Surface3DDialog):
         voxel_size = self.voxel_size_value()
         self.voxel_grid.voxel_number = np.array(
             [
-                int(self.size[0] / voxel_size) + 1,
-                int(self.size[1] / voxel_size) + 1,
-                int(self.size[2] / voxel_size) + 1,
+                int(self.grid_size[0] / voxel_size) + 1,
+                int(self.grid_size[1] / voxel_size) + 1,
+                int(self.grid_size[2] / voxel_size) + 1,
             ],
             dtype=np.int64,
         )
@@ -514,7 +514,7 @@ class MOsDialog(Surface3DDialog):
             msg = "No molecular orbitals loaded"
             raise ValueError(msg)
         # Calculate the cutoffs for the shells
-        max_distance = np.linalg.norm(self.size * ANGSTROM_TO_BOHR)
+        max_distance = np.linalg.norm(self.grid_size * ANGSTROM_TO_BOHR)
         max_number = int(max_distance * 5)
         threshold = 10 ** self.ui.cutoffSpinBox.value()
 
@@ -565,11 +565,11 @@ class MOsDialog(Surface3DDialog):
 
     def remove_isolines(self) -> None:
         """Remove the isolines."""
-        self.parent().structure_widget.makeCurrent()
+        self._main_window.structure_widget.makeCurrent()
         for i in range(2):
-            if f"Isolines_{i + 1}" in self.parent().structure_widget.renderer.objects3d:
-                self.parent().structure_widget.renderer.remove_object(f"Isolines_{i + 1}")
-        self.parent().structure_widget.update()
+            if f"Isolines_{i + 1}" in self._main_window.structure_widget.renderer.objects3d:
+                self._main_window.structure_widget.renderer.remove_object(f"Isolines_{i + 1}")
+        self._main_window.structure_widget.update()
         self.set_isolines_hidden()
 
     def set_isoline_border_points(self) -> None:
@@ -608,29 +608,29 @@ class MOsDialog(Surface3DDialog):
             ],
             dtype=np.float32,
         )
-        self.parent().structure_widget.renderer.draw_cylinders_from_to(
+        self._main_window.structure_widget.renderer.draw_cylinders_from_to(
             "Isoline_Border_Cylinders",
             cylinder_end_points,
             np.array([0.01] * 4, dtype=np.float32),
             np.array([0, 0, 0] * 4, dtype=np.float32),
             10,
         )
-        self.parent().structure_widget.renderer.draw_spheres(
+        self._main_window.structure_widget.renderer.draw_spheres(
             "Isoline_Border_Spheres",
             self.isoline_border_points,
             np.array([0.01] * 4, dtype=np.float32),
             np.array([0, 0, 0] * 4, dtype=np.float32),
             10,
         )
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()
 
     def remove_isoline_border(self) -> None:
         """Remove the border of the isoline grid."""
-        if "Isoline_Border_Cylinders" in self.parent().structure_widget.renderer.objects3d:
-            self.parent().structure_widget.renderer.remove_object("Isoline_Border_Cylinders")
-        if "Isoline_Border_Spheres" in self.parent().structure_widget.renderer.objects3d:
-            self.parent().structure_widget.renderer.remove_object("Isoline_Border_Spheres")
-        self.parent().structure_widget.update()
+        if "Isoline_Border_Cylinders" in self._main_window.structure_widget.renderer.objects3d:
+            self._main_window.structure_widget.renderer.remove_object("Isoline_Border_Cylinders")
+        if "Isoline_Border_Spheres" in self._main_window.structure_widget.renderer.objects3d:
+            self._main_window.structure_widget.renderer.remove_object("Isoline_Border_Spheres")
+        self._main_window.structure_widget.update()
 
     def toggle_isoline_border(self) -> None:
         """Toggle the isoline grid border."""
@@ -777,14 +777,14 @@ class MOsDialog(Surface3DDialog):
 
     def draw_isolines(self) -> None:
         """Draw the isolines."""
-        self.parent().structure_widget.makeCurrent()
+        self._main_window.structure_widget.makeCurrent()
         self.remove_isolines()
         radii_1 = np.array([self.isoline_radius] * self.isolines_1.shape[0], dtype=np.float32)
         colors_1 = np.array(list(self.color_surface_1 / 255) * self.isolines_1.shape[0], dtype=np.float32)
         radii_2 = np.array([self.isoline_radius] * self.isolines_2.shape[0], dtype=np.float32)
         colors_2 = np.array(list(self.color_surface_2 / 255) * self.isolines_2.shape[0], dtype=np.float32)
         if self.isolines_1.size != 0:
-            self.parent().structure_widget.renderer.draw_cylinders_from_to(
+            self._main_window.structure_widget.renderer.draw_cylinders_from_to(
                 "Isolines_1",
                 self.isolines_1,
                 radii_1,
@@ -792,14 +792,14 @@ class MOsDialog(Surface3DDialog):
                 10,
             )
         if self.isolines_2.size != 0:
-            self.parent().structure_widget.renderer.draw_cylinders_from_to(
+            self._main_window.structure_widget.renderer.draw_cylinders_from_to(
                 "Isolines_2",
                 self.isolines_2,
                 radii_2,
                 colors_2,
                 10,
             )
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()
         self.set_isolines_visible()
 
     def isolines_are_initialized(self) -> bool:
@@ -903,9 +903,9 @@ class MOsDialog(Surface3DDialog):
 
     def set_isoline_border_parameters_from_atoms_plane(self) -> None:
         """Calculate the normal of the isoline border plane from the selected atoms and set the parameters."""
-        atom1 = self.parent().structure_widget.structures[0].atoms[self.isoline_selected_atoms[0]]
-        atom2 = self.parent().structure_widget.structures[0].atoms[self.isoline_selected_atoms[1]]
-        atom3 = self.parent().structure_widget.structures[0].atoms[self.isoline_selected_atoms[2]]
+        atom1 = self._main_window.structure_widget.structures[0].atoms[self.isoline_selected_atoms[0]]
+        atom2 = self._main_window.structure_widget.structures[0].atoms[self.isoline_selected_atoms[1]]
+        atom3 = self._main_window.structure_widget.structures[0].atoms[self.isoline_selected_atoms[2]]
         self.isoline_border_center = (atom1.position + atom2.position + atom3.position) / 3
         normal = np.cross(atom2.position - atom1.position, atom3.position - atom1.position)
 
@@ -945,13 +945,13 @@ class MOsDialog(Surface3DDialog):
                 return
             self.set_recalculate_isoline_grid()
             self.rotate_isoline_border(axis, value)
-            self.isoline_rotation_values[0] = self.ui.redSpinBox.value()
+            self.isoline_rotation_values[0] = int(self.ui.redSpinBox.value())
 
         if self.isoline_border_rot_trans_scale_group.checkedId() == scale:
             if self.isoline_border_scale[0] == self.ui.redSpinBox.value():
                 return
             self.set_recalculate_isoline_grid()
-            self.isoline_border_scale[0] = self.ui.redSpinBox.value()
+            self.isoline_border_scale[0] = int(self.ui.redSpinBox.value())
             self.update_isolines(self.isolines_are_visible)
 
         if self.isoline_border_rot_trans_scale_group.checkedId() == translate:
@@ -962,7 +962,7 @@ class MOsDialog(Surface3DDialog):
             self.set_recalculate_isoline_grid()
             self.isoline_border_center -= axis * value
             self.update_isolines(self.isolines_are_visible)
-            self.isoline_translation_values[0] = self.ui.redSpinBox.value()
+            self.isoline_translation_values[0] = int(self.ui.redSpinBox.value())
 
     def transform_isoline_border_green(self) -> None:
         """Transform the isoline border with the green axis. This wraps different cases."""
@@ -976,13 +976,13 @@ class MOsDialog(Surface3DDialog):
                 return
             self.set_recalculate_isoline_grid()
             self.rotate_isoline_border(axis, value)
-            self.isoline_rotation_values[1] = self.ui.greenSpinBox.value()
+            self.isoline_rotation_values[1] = int(self.ui.greenSpinBox.value())
 
         if self.isoline_border_rot_trans_scale_group.checkedId() == scale:
             if self.isoline_border_scale[1] == self.ui.greenSpinBox.value():
                 return
             self.set_recalculate_isoline_grid()
-            self.isoline_border_scale[1] = self.ui.greenSpinBox.value()
+            self.isoline_border_scale[1] = int(self.ui.greenSpinBox.value())
             self.update_isolines(self.isolines_are_visible)
 
         if self.isoline_border_rot_trans_scale_group.checkedId() == translate:
@@ -993,7 +993,7 @@ class MOsDialog(Surface3DDialog):
             self.set_recalculate_isoline_grid()
             self.isoline_border_center -= axis * value
             self.update_isolines(self.isolines_are_visible)
-            self.isoline_translation_values[1] = self.ui.greenSpinBox.value()
+            self.isoline_translation_values[1] = int(self.ui.greenSpinBox.value())
 
     def transform_isoline_border_blue(self) -> None:
         """Transform the isoline border with the blue axis. This wraps different cases."""
@@ -1007,7 +1007,7 @@ class MOsDialog(Surface3DDialog):
                 return
             self.set_recalculate_isoline_grid()
             self.rotate_isoline_border(axis, value)
-            self.isoline_rotation_values[2] = self.ui.blueSpinBox.value()
+            self.isoline_rotation_values[2] = int(self.ui.blueSpinBox.value())
 
         if self.isoline_border_rot_trans_scale_group.checkedId() == translate:
             axis = self.isoline_border_direction[2]
@@ -1017,7 +1017,7 @@ class MOsDialog(Surface3DDialog):
             self.set_recalculate_isoline_grid()
             self.isoline_border_center -= axis * value
             self.update_isolines(self.isolines_are_visible)
-            self.isoline_translation_values[2] = self.ui.blueSpinBox.value()
+            self.isoline_translation_values[2] = int(self.ui.blueSpinBox.value())
 
     def update_isoline_border_origin(self) -> None:
         """Update the isoline border origin."""
@@ -1059,16 +1059,16 @@ class MOsDialog(Surface3DDialog):
         """Remove the visualization of the selected atoms."""
         for sphere_index in self.isoline_drawn_spheres:
             if sphere_index != -1:
-                self.parent().structure_widget.renderer.remove_sphere(sphere_index)
+                self._main_window.structure_widget.renderer.remove_sphere(sphere_index)
         self.isoline_drawn_spheres = [-1] * 3
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()
 
     def draw_isoline_selected_atoms(self) -> None:
         """Draw the selected atoms."""
         for i, atom_index in enumerate(self.isoline_selected_atoms):
             if atom_index != -1:
-                self.isoline_drawn_spheres[i] = self.parent().structure_widget.draw_selected_atom(atom_index, i)
-        self.parent().structure_widget.update()
+                self.isoline_drawn_spheres[i] = self._main_window.structure_widget.draw_selected_atom(atom_index, i)
+        self._main_window.structure_widget.update()
 
     def update_selected_atoms(self) -> None:
         """Switch to the orbital tab."""
@@ -1118,11 +1118,11 @@ class MOsDialog(Surface3DDialog):
 
     def remove_isoline_axes(self) -> None:
         """Remove the isoline axes used for rotation and translation."""
-        if "Isoline_Axes_Cylinders" in self.parent().structure_widget.renderer.objects3d:
-            self.parent().structure_widget.renderer.remove_object("Isoline_Axes_Cylinders")
-        if "Isoline_Axes_Spheres" in self.parent().structure_widget.renderer.objects3d:
-            self.parent().structure_widget.renderer.remove_object("Isoline_Axes_Spheres")
-        self.parent().structure_widget.update()
+        if "Isoline_Axes_Cylinders" in self._main_window.structure_widget.renderer.objects3d:
+            self._main_window.structure_widget.renderer.remove_object("Isoline_Axes_Cylinders")
+        if "Isoline_Axes_Spheres" in self._main_window.structure_widget.renderer.objects3d:
+            self._main_window.structure_widget.renderer.remove_object("Isoline_Axes_Spheres")
+        self._main_window.structure_widget.update()
 
     def draw_isoline_axes(self) -> None:
         """Draw the isoline axes used for rotation and translation."""
@@ -1142,15 +1142,15 @@ class MOsDialog(Surface3DDialog):
         colors = np.eye(3, dtype=np.float32)
         cylinder_colors = colors[:3]
         sphere_colors = np.vstack(([np.zeros(3)], colors))
-        self.parent().structure_widget.makeCurrent()
-        self.parent().structure_widget.renderer.draw_cylinders_from_to(
+        self._main_window.structure_widget.makeCurrent()
+        self._main_window.structure_widget.renderer.draw_cylinders_from_to(
             "Isoline_Axes_Cylinders",
             cylinder_end_points,
             radii[:3],
             cylinder_colors,
             25,
         )
-        self.parent().structure_widget.renderer.draw_spheres(
+        self._main_window.structure_widget.renderer.draw_spheres(
             "Isoline_Axes_Spheres",
             np.array(sphere_positions, dtype=np.float32),
             radii * 0.99,
@@ -1158,4 +1158,4 @@ class MOsDialog(Surface3DDialog):
             25,
         )
 
-        self.parent().structure_widget.update()
+        self._main_window.structure_widget.update()

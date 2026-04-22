@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from PIL import Image
-from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow
+from PySide6.QtWidgets import QDialog, QFileDialog
 
 from molara.gui.layouts.ui_export_image_dialog import Ui_Dialog
+
+if TYPE_CHECKING:
+    from molara.gui.main_window import MainWindow
 
 
 class ExportImageDialog(QDialog):
     """Dialog for exporting a snapshot of the rendered structure."""
 
-    def __init__(self, parent: QMainWindow) -> None:
+    def __init__(self, parent: MainWindow) -> None:
         """Instantiate the dialog object."""
         super().__init__(parent)
         self.ui = Ui_Dialog()
@@ -23,7 +27,7 @@ class ExportImageDialog(QDialog):
         self.set_event_connections()
         self.transparent_background = False
 
-        self.main_window = parent
+        self.main_window: MainWindow = parent
 
         # temporary adjustments for the dialog until features are implemented
         self.ui.tabWidget.setTabEnabled(1, False)  # noqa: FBT003 (disable the "Advanced" tab for now)
