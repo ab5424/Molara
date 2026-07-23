@@ -8,8 +8,9 @@ import numpy as np
 from numpy.typing import NDArray
 from OpenGL.GL import GL_DEPTH_TEST, GL_MULTISAMPLE, glClearColor, glEnable
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QContextMenuEvent, QGuiApplication
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
+from PySide6.QtWidgets import QMenu
 
 from molara.rendering.camera import Camera
 from molara.rendering.rendering import Renderer
@@ -59,6 +60,8 @@ class StructureWidget(QOpenGLWidget):
         self.measurement_drawn_spheres: list = [-1] * 4
         self.builder_selected_spheres: list = [-1] * 3
         self.builder_drawn_spheres: list = [-1] * 3
+
+        self._was_right_click_drag = False
 
         self.old_sphere_colors: list = [NDArray] * 4
         self.highlighted_atoms_colors: list = [
@@ -260,6 +263,7 @@ class StructureWidget(QOpenGLWidget):
             self.click_position = np.copy(self.position)
 
         if event.button() == Qt.MouseButton.RightButton:
+            self._was_right_click_drag = False
             self.translate = True
             if self.rotate is True:
                 self.stop_rotation(event)
@@ -275,6 +279,7 @@ class StructureWidget(QOpenGLWidget):
             self.set_normalized_position(event)
             self.camera.set_rotation_quaternion(self.click_position, self.position)
         if self.translate and self.click_position is not None:
+            self._was_right_click_drag = True
             self.set_normalized_position(event)
             self.camera.set_translation_vector(self.click_position, self.position)
         self.camera.update()
@@ -302,6 +307,46 @@ class StructureWidget(QOpenGLWidget):
             self.stop_rotation(event)
         if event.button() == Qt.MouseButton.RightButton and self.translate:
             self.stop_translate(event)
+
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # noqa: N802
+        """Show a context menu with display settings on right-click.
+
+        The menu is only shown when the right mouse button was clicked without dragging.
+
+        :param event: context menu event
+        """
+        if self._was_right_click_drag:
+            return
+
+        menu = QMenu(self)
+
+        menu.addAction("Reset View", self.reset_view)
+        menu.addAction("Center Structure", self.center_structure)
+        menu.addSeparator()
+
+        axes_text = "Hide Axes" if self.draw_axes else "Show Axes"
+        menu.addAction(axes_text, self.toggle_axes)
+
+        proj_text = (
+            "Perspective Projection" if self.orthographic_projection else "Orthographic Projection"
+        )
+        menu.addAction(proj_text, self.toggle_projection)
+
+        if self.structures and isinstance(self.structures[0], Crystal):
+            ucell_text = "Hide Unit Cell Boundaries" if self.box else "Show Unit Cell Boundaries"
+            menu.addAction(ucell_text, self.toggle_unit_cell_boundaries)
+
+        menu.addSeparator()
+
+        if self.structures:
+            bonds_text = "Hide Bonds" if self.bonds else "Show Bonds"
+            menu.addAction(bonds_text, self.main_window.structure_customizer_dialog.toggle_bonds)
+
+        menu.addSeparator()
+
+        menu.addAction("Open Structure Customizer", self.main_window.show_structure_customizer_dialog)
+
+        menu.exec(event.globalPos())
 
     def stop_translate(self, event: QMouseEvent) -> None:
         """Stop the translation of the structure.

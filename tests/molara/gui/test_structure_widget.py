@@ -9,7 +9,8 @@ from unittest import mock
 import numpy as np
 from numpy.testing import assert_array_equal
 from PySide6.QtCore import QEvent, QPoint, Qt
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtGui import QContextMenuEvent, QMouseEvent
+from PySide6.QtWidgets import QMenu
 
 from molara.gui.structure_widget import BUILDER, MEASUREMENT
 from molara.structure.crystal import Crystal
@@ -46,6 +47,7 @@ class WorkaroundTestStructureWidget:
         self.test_select_atoms()
         self.test_import_camera_settings()
         self.test_set_view_to_axes()
+        self.test_context_menu()
 
     def test_import_camera_settings(self) -> None:
         """Test the import function for the camera."""
@@ -180,3 +182,33 @@ class WorkaroundTestStructureWidget:
         assert_vectors_equal(camera.rotation.tolist(), quaternion_y)
         structure_widget.set_view_to_axis("z")
         assert_vectors_equal(camera.rotation.tolist(), quaternion_z)
+
+    def test_context_menu(self) -> None:
+        """Test the right-click context menu."""
+        structure_widget = self.main_window.structure_widget
+        event = QContextMenuEvent(QContextMenuEvent.Reason.Mouse, QPoint(50, 50))
+
+        # Simulate a right-click drag: press, move, release → menu should NOT open
+        self.qtbot.mousePress(structure_widget, Qt.RightButton, pos=QPoint(50, 50))
+        self.qtbot.mouseMove(structure_widget, QPoint(60, 60))
+        self.qtbot.mouseRelease(structure_widget, Qt.RightButton, pos=QPoint(60, 60))
+        with mock.patch.object(QMenu, "exec") as mock_exec:
+            structure_widget.contextMenuEvent(event)
+            mock_exec.assert_not_called()
+
+        # Simulate a plain right-click (no drag): press, release → menu should open
+        self.qtbot.mousePress(structure_widget, Qt.RightButton, pos=QPoint(50, 50))
+        self.qtbot.mouseRelease(structure_widget, Qt.RightButton, pos=QPoint(50, 50))
+        with mock.patch.object(QMenu, "exec") as mock_exec:
+            structure_widget.contextMenuEvent(event)
+            mock_exec.assert_called_once()
+
+        # With a molecule loaded, the context menu should still open on plain right-click
+        testargs = ["molara", "examples/xyz/pentane.xyz"]
+        with mock.patch.object(sys, "argv", testargs):
+            self.main_window.show_init_xyz()
+        self.qtbot.mousePress(structure_widget, Qt.RightButton, pos=QPoint(50, 50))
+        self.qtbot.mouseRelease(structure_widget, Qt.RightButton, pos=QPoint(50, 50))
+        with mock.patch.object(QMenu, "exec") as mock_exec:
+            structure_widget.contextMenuEvent(event)
+            mock_exec.assert_called_once()
